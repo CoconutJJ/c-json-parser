@@ -8,20 +8,19 @@
 #define AS_JSON_ARRAY(json)  ((JSON_ARRAY *)(json))
 #define AS_JSON_ENTRY(json)  ((JSON_ENTRY *)(json))
 
+typedef enum { ITEM, OBJECT, ARRAY, ENTRY } JSON_OBJTYPE;
+
 typedef enum {
-
-        ITEM,
-        OBJECT,
-        ARRAY,
-        ENTRY
-
-} JSON_OBJTYPE;
-
-typedef enum { JSON_TYPESTRING, JSON_TYPELONG, JSON_TYPEDOUBLE } JSON_ITEMTYPE;
+        JSON_TYPESTRING,
+        JSON_TYPELONG,
+        JSON_TYPEDOUBLE,
+        JSON_TYPETRUE,
+        JSON_TYPEFALSE,
+        JSON_TYPENIL
+} JSON_ITEMTYPE;
 
 typedef struct {
         JSON_OBJTYPE type;
-
 } JSON;
 
 typedef struct {
@@ -55,5 +54,5 @@ typedef struct {
 } JSON_ARRAY;
 
 JSON *parse_json (char *input);
-
+void print_json (JSON *json);
 #endif

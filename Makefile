@@ -2,7 +2,14 @@ CC=gcc
 CFLAGS=-Ofast -Wall
 OBJ=mem.o parser.o scanner.o
 
-all: json clean 
+all: lib
+
+lib: $(OBJ) 
+	ar rcs libjson.a $(OBJ)
+	mkdir -p build
+	mv libjson.a build
+	cp parser.h build/json.h
+	rm *.o
 
 json: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o json

@@ -2,13 +2,13 @@
 #include "mem.h"
 #include "scanner.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
+static Token curr = { 0 };
 
-Token curr = { 0 };
+static bool has_errors = false;
 
-bool has_errors = false;
-
-void advance ()
+static void advance ()
 {
         Token next = scan_token ();
 
@@ -22,12 +22,12 @@ void advance ()
         curr = next;
 }
 
-Token peek ()
+static Token peek ()
 {
         return curr;
 }
 
-bool match (TokenType t)
+static bool match (TokenType t)
 {
         if (has_errors)
                 return false;
@@ -102,7 +102,7 @@ void add_json_array (JSON_ARRAY *arr, JSON *new_item)
         arr->items[arr->count++] = new_item;
 }
 
-void consume (TokenType t, char *message, ...)
+static void consume (TokenType t, char *message, ...)
 {
         if (!match (t))
                 has_errors = true;
@@ -159,7 +159,7 @@ void destroy_json (JSON *json)
         }
 }
 
-JSON *parse ()
+static JSON *parse ()
 {
         Token t = peek ();
         advance ();
@@ -179,7 +179,7 @@ JSON *parse ()
                         JSON *value = parse ();
 
                         if (!value)
-                                return NULL;
+                                break;
 
                         add_json_entry (obj, create_json_entry (key.s, value));
 
@@ -189,7 +189,8 @@ JSON *parse ()
                         if (match (RBRACE))
                                 break;
 
-                        return NULL;
+                        has_errors = true;
+                        break;
                 }
 
                 return AS_JSON (obj);
@@ -205,7 +206,7 @@ JSON *parse ()
                         JSON *item = parse ();
 
                         if (!item)
-                                return NULL;
+                                break;
 
                         add_json_array (arr, item);
 
@@ -214,7 +215,8 @@ JSON *parse ()
                         if (match (COMMA))
                                 continue;
 
-                        return NULL;
+                        has_errors = true;
+                        break;
                 }
 
                 return AS_JSON (arr);
@@ -237,6 +239,56 @@ JSON *parse ()
         default: break;
         }
         return NULL;
+}
+
+void print_json (JSON *json)
+{
+        switch (json->type) {
+        case ITEM: {
+                JSON_ITEM *item = AS_JSON_ITEM (json);
+
+                switch (item->item_type) {
+                case JSON_TYPEDOUBLE: printf ("%.2f", item->d); break;
+                case JSON_TYPELONG: printf ("%ld", item->l); break;
+                case JSON_TYPESTRING: printf ("\"%s\"", item->s); break;
+                default: break;
+                }
+                break;
+        }
+        case ARRAY: {
+                JSON_ARRAY *arr = AS_JSON_ARRAY (json);
+                printf ("[");
+                for (int i = 0; i < arr->count; i++) {
+                        print_json (arr->items[i]);
+
+                        if (i != arr->count - 1)
+                                printf (", ");
+                }
+                printf ("]");
+
+                break;
+        }
+
+        case OBJECT: {
+                JSON_OBJECT *obj = AS_JSON_OBJECT (json);
+                printf ("{");
+                for (int i = 0; i < obj->count; i++) {
+                        print_json (AS_JSON (obj->entries[i]));
+
+                        if (i != obj->count - 1)
+                                printf (", ");
+                }
+                printf ("}");
+                break;
+        }
+        case ENTRY: {
+                JSON_ENTRY *ent = AS_JSON_ENTRY (json);
+                printf ("\"%s\":", ent->key);
+                print_json (ent->value);
+                break;
+        }
+        default: break;
+        }
 }
 
 JSON *parse_json (char *input)

@@ -4,7 +4,22 @@
 
 #define TOKEN_TYPE(token) token.type;
 
-typedef enum { LBRACE, RBRACE, LBRACKET, RBRACKET, COLON, COMMA, LONG, DOUBLE, STRING, END, ERROR } TokenType;
+typedef enum {
+        LBRACE,
+        RBRACE,
+        LBRACKET,
+        RBRACKET,
+        COLON,
+        COMMA,
+        LONG,
+        DOUBLE,
+        STRING,
+        TRUE,
+        FALSE,
+        NIL,
+        END,
+        ERROR
+} TokenType;
 
 typedef struct {
         TokenType type;
@@ -19,5 +34,5 @@ typedef struct {
 } Token;
 
 Token scan_token ();
-void init_json_scanner(char *input);
+void init_json_scanner (char *input);
 #endif

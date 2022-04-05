@@ -6,11 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *input_buffer = NULL;
-char *curr = NULL;
+static char *input_buffer = NULL;
+static char *curr = NULL;
 
-size_t col_no = 0;
-size_t line_no = 1;
+static size_t col_no = 0;
+static size_t line_no = 1;
 
 static bool at_end ()
 {
@@ -42,7 +42,17 @@ static bool is_numeric (char c)
         return '0' <= c && c <= '9';
 }
 
-Token number ()
+static bool is_alpha (char c)
+{
+        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+}
+
+// static bool is_hex (char c)
+// {
+//         return ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') || ('0' <= c && c <= '9');
+// }
+
+static Token number ()
 {
         char *start = curr - 1;
 
@@ -69,7 +79,7 @@ Token number ()
         return n;
 }
 
-Token create_error_token (char *error_message, size_t arg_size, ...)
+static Token create_error_token (char *error_message, size_t arg_size, ...)
 {
         char *error_buf = allocate (strlen (error_message) + arg_size + 1);
         va_list args;
@@ -81,17 +91,40 @@ Token create_error_token (char *error_message, size_t arg_size, ...)
         return error;
 }
 
-Token string ()
+static Token literal ()
+{
+        char *start = curr - 1;
+
+        while (is_alpha (peek ())) {
+                advance ();
+        }
+
+        char *end = curr;
+
+        char *literal_buf = allocate (end - start + 1);
+
+        strncpy (literal_buf, start, end - start);
+        literal_buf[end - start] = '\0';
+
+        if (strcmp ("true", literal_buf) == 0)
+                return (Token){ .type = TRUE, .col_no = col_no, .line_no = line_no };
+        else if (strcmp ("false", literal_buf) == 0)
+                return (Token){ .type = FALSE, .col_no = col_no, .line_no = line_no };
+        else if (strcmp ("null", literal_buf) == 0)
+                return (Token){ .type = NIL, .col_no = col_no, .line_no = line_no };
+        else
+                return create_error_token ("unexpected literal", 0);
+}
+
+static Token string ()
 {
         char *start = curr;
         while (!match ('"')) {
-                if (at_end ()) {
+                if (at_end ())
                         return create_error_token ("unexpected EOF, was expecting CLOSING `\"`", 0);
-                }
 
-                if (match ('\\')) {
+                if (match ('\\'))
                         advance ();
-                }
 
                 advance ();
         }
@@ -112,7 +145,8 @@ Token string ()
         return s;
 }
 
-void init_json_scanner(char *input) {
+void init_json_scanner (char *input)
+{
         input_buffer = input;
         curr = input;
         col_no = 0;
@@ -151,10 +185,13 @@ Token scan_token ()
                         col_no = 1;
                         break;
                 case ' ':
+                case '\r':
                 case '\t': continue;
                 default:
-                        if (is_numeric (c))
+                        if (is_numeric (c) || c == '-' || c == '+')
                                 token = number ();
+                        else if (is_alpha (c))
+                                token = literal ();
                         else
                                 token = create_error_token ("unknown symbol %c", c);
 
