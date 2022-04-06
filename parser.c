@@ -86,7 +86,7 @@ void add_json_entry (JSON_OBJECT *obj, JSON_ENTRY *new_entry)
 {
         if (obj->count == obj->capacity) {
                 obj->capacity *= 2;
-                reallocate (obj->entries, obj->capacity * sizeof (JSON_ENTRY *));
+                obj->entries = reallocate (obj->entries, obj->capacity * sizeof (JSON_ENTRY *));
         }
 
         obj->entries[obj->count++] = new_entry;
@@ -96,7 +96,7 @@ void add_json_array (JSON_ARRAY *arr, JSON *new_item)
 {
         if (arr->count == arr->capacity) {
                 arr->capacity *= 2;
-                reallocate (arr->items, arr->capacity * sizeof (JSON *));
+                arr->items = reallocate (arr->items, arr->capacity * sizeof (JSON *));
         }
 
         arr->items[arr->count++] = new_item;
@@ -229,11 +229,25 @@ static JSON *parse ()
         case LONG: {
                 JSON_ITEM *item = create_json_item (JSON_TYPELONG);
                 item->l = t.l;
+                item->exp = t.exp;
                 return AS_JSON (item);
         }
         case DOUBLE: {
                 JSON_ITEM *item = create_json_item (JSON_TYPEDOUBLE);
                 item->d = t.d;
+                item->exp = t.exp;
+                return AS_JSON (item);
+        }
+        case TRUE: {
+                JSON_ITEM *item = create_json_item (JSON_TYPETRUE);
+                return AS_JSON (item);
+        }
+        case FALSE: {
+                JSON_ITEM *item = create_json_item (JSON_TYPEFALSE);
+                return AS_JSON (item);
+        }
+        case NIL: {
+                JSON_ITEM *item = create_json_item (JSON_TYPENIL);
                 return AS_JSON (item);
         }
         default: break;
@@ -248,9 +262,28 @@ void print_json (JSON *json)
                 JSON_ITEM *item = AS_JSON_ITEM (json);
 
                 switch (item->item_type) {
-                case JSON_TYPEDOUBLE: printf ("%.2f", item->d); break;
-                case JSON_TYPELONG: printf ("%ld", item->l); break;
+                case JSON_TYPEDOUBLE: {
+                        printf ("%.2f", item->d);
+                        if (item->exp != 0) {
+                                putchar ('E');
+                                putchar (item->exp > 0 ? '+' : '-');
+                                printf ("%ld", item->exp);
+                        }
+                        break;
+                }
+                case JSON_TYPELONG: {
+                        printf ("%ld", item->l);
+                        if (item->exp != 0) {
+                                putchar ('E');
+                                putchar (item->exp > 0 ? '+' : '-');
+                                printf ("%ld", item->exp);
+                        }
+                        break;
+                }
                 case JSON_TYPESTRING: printf ("\"%s\"", item->s); break;
+                case JSON_TYPEFALSE: printf ("false"); break;
+                case JSON_TYPETRUE: printf ("true"); break;
+                case JSON_TYPENIL: printf ("null"); break;
                 default: break;
                 }
                 break;

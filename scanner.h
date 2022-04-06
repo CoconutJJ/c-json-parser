@@ -26,9 +26,15 @@ typedef struct {
         size_t line_no;
         size_t col_no;
         union {
-                long l;
+                struct {
+                        union {
+                                long l;
+                                double d;
+                        };
+                        long exp;
+                };
+
                 char *s;
-                double d;
                 char *error_message;
         };
 } Token;

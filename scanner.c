@@ -47,34 +47,56 @@ static bool is_alpha (char c)
         return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
 }
 
-// static bool is_hex (char c)
-// {
-//         return ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') || ('0' <= c && c <= '9');
-// }
+static bool exponent (Token *n)
+{
+        char *start = curr;
+
+        if (!match ('-') && !match ('+'))
+                return false;
+
+        while (is_numeric (peek ()))
+                advance ();
+
+        n->exp = strtol (start, NULL, 10);
+
+        return true;
+}
 
 static Token number ()
 {
         char *start = curr - 1;
 
-        while (is_numeric (peek ())) {
+        while (is_numeric (peek ()))
                 advance ();
-        }
 
         Token n;
         n.col_no = col_no;
         n.line_no = line_no;
+        n.exp = 0;
+
         if (!match ('.')) {
                 n.type = LONG;
                 n.l = strtol (start, NULL, 10);
+
+                if (match ('e') || match ('E'))
+                        exponent (&n);
+
                 return n;
         }
 
-        while (is_numeric (peek ())) {
+        while (is_numeric (peek ()))
                 advance ();
-        }
+
+        char *end = curr;
+        char buf[end - start + 1];
+        strncpy (buf, start, end - start);
+        buf[end - start] = '\0';
 
         n.type = DOUBLE;
-        n.d = strtod (start, NULL);
+        n.d = strtod (buf, NULL);
+
+        if (match ('e') || match ('E'))
+                exponent (&n);
 
         return n;
 }
@@ -95,9 +117,8 @@ static Token literal ()
 {
         char *start = curr - 1;
 
-        while (is_alpha (peek ())) {
+        while (is_alpha (peek ()))
                 advance ();
-        }
 
         char *end = curr;
 

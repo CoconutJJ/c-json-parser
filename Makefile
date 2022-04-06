@@ -11,8 +11,9 @@ lib: $(OBJ)
 	cp parser.h build/json.h
 	rm *.o
 
-json: $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o json
+json: CFLAGS=-Og -g -Wall 
+json: $(OBJ) json.o
+	$(CC) $(CFLAGS) $(OBJ) json.o -o json
 
 debug: CFLAGS=-Og -g -Wall
 debug: json clean

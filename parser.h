@@ -28,8 +28,13 @@ typedef struct {
         JSON_ITEMTYPE item_type;
         union {
                 char *s;
-                long l;
-                double d;
+                struct {
+                        union {
+                                long l;
+                                double d;
+                        };
+                        long exp;
+                };
         };
 } JSON_ITEM;
 

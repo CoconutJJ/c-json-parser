@@ -3,7 +3,7 @@
 #include "mem.h"
 
 
-void reallocate (void *array, size_t new_size)
+void * reallocate (void *array, size_t new_size)
 {
         array = realloc (array, new_size);
 
@@ -11,6 +11,7 @@ void reallocate (void *array, size_t new_size)
                 perror ("realloc");
                 exit (EXIT_FAILURE);
         }
+        return array;
 }
 
 void *allocate (size_t size)

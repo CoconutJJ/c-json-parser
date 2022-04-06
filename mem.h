@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-void reallocate (void *array, size_t new_size);
+void *reallocate (void *array, size_t new_size);
 void *allocate (size_t size);
 
 #endif
